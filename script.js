@@ -9,55 +9,43 @@ let authStates = { yusuf: false, saleh: false, admin: false };
 let currentUser = null;
 let chatHistory = [];
 
-// --- EXERCISE POOL ---
+// --- LIBRARIES ---
 const YUSUF_LIB = [
     { t: "استقامة أسفل الظهر", d: "تمرين تمدد الكوبرا لتقليل انحناء الظهر الزائد.", img: "posture_stretch_exercise_1776066786842.png", b: "يعدل بروز الظهر والمشية." },
     { t: "مشية الوقار الثابتة", d: "المشي مع جعل الصدر للأعلى وتثبيت الحوض.", img: "walking_posture_exercise_1776066906087.png", b: "يمنع 'النط' في المشية." },
-    { t: "تمرين ضغط الحوض", d: "الاستلقاء ورفع الحوض للأعلى وللداخل ببطء.", img: "pelvic_tilt_exercise_1776066926439.png", b: "يقوي عضلات الحوض والظهر." },
-    { t: "الصمت الكاريزمي", d: "حاول اليوم ألا تتحدث في أمور لا تهمك، استمع فقط.", b: "يبني هيبة عظيمة لوزنك." },
-    { t: "مهمة الخصوصية", d: "لا تسأل أحداً 'أين كنت؟' أو 'ماذا تفعل؟'.", b: "يجعل الناس تحترم غموضك." }
+    { t: "تمرين ضغط الحوض", d: "الاستلقاء ورفع الحوض للأعلى وللداخل ببطء.", img: "pelvic_tilt_exercise_1776066926439.png", b: "يقوي عضلات الحوض والظهر." }
 ];
 
-const SALEH_LIB = [
-    { t: "نجم الصلاة الخاشعة", d: "صلِّ بالتركيز على التربة ولا تلتفت حولك أبداً.", icon: "🕌" },
-    { t: "البقاء في المسجد", d: "لا تخرج للعب بعد الأذان، ابقَ في المسجد لتصلي مع الجماعة.", icon: "👣" },
-    { t: "طاعة الإخوة", d: "اسمع كلام أخيك يوسف ونفذ طلبه فوراً دون عناد.", icon: "🤝" }
+const SALEH_QUIZ_MASTER = [
+    { q: "من هو الإمام الصادق (ع)؟", a: ["الإمام السادس", "الإمام الأول", "الإمام الرابع"], r: 0, sadiq: true },
+    { q: "ما هو لقب الإمام جعفر (ع)؟", a: ["الكاظم", "الصادق", "الهادي"], r: 1, sadiq: true },
+    { q: "ما اسم والد الإمام الصادق (ع)؟", a: ["الإمام الباقر (ع)", "الإمام علي (ع)", "الإمام السجاد (ع)"], r: 0, sadiq: true }
 ];
 
-// --- MODAL SYSTEM ---
+const YUSUF_GAMES_MASTER = [
+    { s: "شخص يسألك سؤالاً خاصاً جداً لا تريد الإجابة عليه؟", o: ["أجاوب بخجل", "أقول بوقار: هذا أمر خاص لا أحب الحديث عنه", "أغضب"], r: 1 }
+];
+
+// --- MODAL ---
 const modalOverlay = document.getElementById('modal-overlay');
 const modalInput = document.getElementById('modal-input');
 let currentOkAction = null;
 
-function showModal(title, body, isPass = false, onOk = null) {
+function showModal(title, body, type = 'info', onOk = null) {
     document.getElementById('modal-title').innerText = title;
     document.getElementById('modal-body').innerText = body;
-    document.getElementById('modal-input-container').style.display = isPass ? 'block' : 'none';
+    document.getElementById('modal-input-container').style.display = (type === 'password' || type === 'text') ? 'block' : 'none';
     modalOverlay.style.display = 'flex';
     currentOkAction = onOk;
-    if (isPass) {
+    if (type === 'password' || type === 'text') {
+        modalInput.type = type === 'password' ? 'password' : 'text';
         modalInput.value = '';
         modalInput.focus();
     }
 }
+function closeModal() { modalOverlay.style.display = 'none'; currentOkAction = null; }
 
-function closeModal() {
-    modalOverlay.style.display = 'none';
-    currentOkAction = null;
-}
-
-modalInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        if (currentOkAction) currentOkAction(modalInput.value);
-        closeModal();
-    }
-});
-
-document.getElementById('modal-btn-ok').onclick = () => {
-    if (currentOkAction) currentOkAction(modalInput.value);
-    closeModal();
-};
-
+document.getElementById('modal-btn-ok').onclick = () => { if (currentOkAction) currentOkAction(modalInput.value); closeModal(); };
 document.getElementById('modal-btn-cancel').onclick = closeModal;
 
 // --- ROUTER ---
@@ -76,238 +64,133 @@ function router() {
         renderPage('page-home');
         document.getElementById('app-header').style.display = 'none';
         document.getElementById('chat-widget').style.display = 'none';
-    } else if (hash === '#yusuf') {
-        if (!authStates.yusuf) { window.location.hash = '#/'; return; }
-        currentUser = 'yusuf';
-        renderPage('page-yusuf');
-        renderYusuf();
-    } else if (hash === '#saleh') {
-        if (!authStates.saleh) { window.location.hash = '#/'; return; }
-        currentUser = 'saleh';
-        renderPage('page-saleh');
-        renderSaleh();
+    } else {
+        const u = hash.replace('#', '');
+        if (!authStates[u]) { window.location.hash = '#/'; return; }
+        currentUser = u;
+        renderPage('page-' + u);
+        if (u === 'yusuf') renderYusuf(); else renderSaleh();
     }
 }
 
 function renderPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    if (id !== 'page-home') {
-        document.getElementById('app-header').style.display = 'flex';
-        document.getElementById('header-user-name').innerText = 
-            id === 'page-admin' ? 'الإدارة' : (id === 'page-yusuf' ? 'يوسف 🎓' : 'صالح 👦🏻');
-        if (id !== 'page-admin') document.getElementById('chat-widget').style.display = 'block';
-    }
+    document.getElementById('app-header').style.display = id === 'page-home' ? 'none' : 'flex';
+    document.getElementById('chat-widget').style.display = (id === 'page-yusuf' || id === 'page-saleh') ? 'block' : 'none';
+    document.getElementById('header-user-name').innerText = id.replace('page-', '').toUpperCase();
 }
 
 function showLoginGate(user) {
-    const label = user === 'admin' ? 'الإدارة' : (user === 'yusuf' ? 'يوسف' : 'صالح');
-    showModal(`دخول ${label}`, "أدخل الرمز السري للمتابعة:", true, (pass) => {
-        if (pass === localStorage.getItem('pass_' + user)) {
+    showModal(`دخول ${user}`, "أدخل الرمز السري:", 'password', (pass) => {
+        if (pass.trim() === localStorage.getItem('pass_' + user).trim()) {
             authStates[user] = true;
-            if (window.location.hash === (user === 'admin' ? '#/abo.ali12' : '#' + user)) {
-                router(); // Manual trigger if hash didn't change
-            } else {
-                window.location.hash = user === 'admin' ? '#/abo.ali12' : '#' + user;
-            }
+            const target = user === 'admin' ? '#/abo.ali12' : '#' + user;
+            if (window.location.hash === target) router();
+            else window.location.hash = target;
         } else {
-            showModal("خطأ", "الرمز غير صحيح!");
+            showModal("❌ خطأ", "الرمز غير صحيح.");
             window.location.hash = '#/';
         }
     });
 }
+function logout() { authStates = { yusuf: false, saleh: false, admin: false }; window.location.hash = '#/'; window.location.reload(); }
 
-function logout() {
-    authStates = { yusuf: false, saleh: false, admin: false };
-    window.location.hash = '#/';
+// --- GAMES & STATS ---
+function addXP(u, amt, btn) {
+    let xp = parseInt(localStorage.getItem(u+'_xp')) || 0; let lvl = parseInt(localStorage.getItem(u+'_level')) || 1;
+    xp += amt; if(xp>=100){ xp=0; lvl++; showModal("🆙 تقدم!", `مستوى ${lvl}!`); }
+    localStorage.setItem(u+'_xp', xp); localStorage.setItem(u+'_level', lvl);
+    if(btn) { btn.disabled = true; btn.innerText = "✅"; }
+    updateStats(u);
+}
+function updateStats(u) {
+    const xp = parseInt(localStorage.getItem(u+'_xp')) || 0; const lvl = parseInt(localStorage.getItem(u+'_level')) || 1;
+    const l = u[0];
+    if(document.getElementById(l+'-lvl')) document.getElementById(l+'-lvl').innerText = lvl;
+    if(document.getElementById(l+'-xp-bar')) document.getElementById(l+'-xp-bar').style.width = xp+'%';
 }
 
-// --- CONTENT ---
 function renderYusuf() {
-    const day = new Date().getDate();
     updateStats('yusuf');
-    const missions = [YUSUF_LIB[day%YUSUF_LIB.length], YUSUF_LIB[(day+1)%YUSUF_LIB.length], YUSUF_LIB[(day+2)%YUSUF_LIB.length]];
-    document.getElementById('y-missions').innerHTML = missions.map(m => `
-        <div class="item-card glass">
-            <h3>${m.t}</h3><p style="opacity:0.7; margin:1rem 0">${m.d}</p>
-            <button class="btn success item-btn" onclick="addXP('yusuf', 25, this)">تم المهمة</button>
-        </div>
-    `).join('');
-    const exercises = YUSUF_LIB.filter(i => i.img);
-    document.getElementById('y-exercises').innerHTML = exercises.map(ex => `
-        <div class="item-card glass">
-            <img src="${ex.img}"><h3>${ex.t}</h3><p style="opacity:0.7; font-size:0.9rem">${ex.d}</p>
-            <button class="btn item-btn" onclick="addXP('yusuf', 15, this)">بدأت التمرين</button>
-        </div>
-    `).join('');
+    const day = new Date().getDate();
+    document.getElementById('y-missions').innerHTML = `
+        <div class="item-card glass"><h3>مهمة بناء الشخصية</h3><p>${YUSUF_LIB[day%YUSUF_LIB.length].t}</p><button class="btn success" onclick="addXP('yusuf',25,this)">تم الإنجاز ✅</button></div>`;
+    renderYGame();
+}
+function renderYGame() {
+    const q = YUSUF_GAMES_MASTER[0];
+    const box = document.getElementById('y-game');
+    box.innerHTML = `<div class="section-title">🎮 اختبار الكاريزما</div>
+        <div class="item-card glass" id="y-opts"><p>${q.s}</p>${q.o.map((o,i)=>`<button class="btn" style="background:rgba(255,255,255,0.05)" onclick="checkY(${i},${q.r},this)">${o}</button>`).join('')}</div>`;
+}
+function checkY(idx, correct, btn) {
+    const btns = document.getElementById('y-opts').querySelectorAll('button');
+    btns.forEach((b,i)=>{ b.disabled=true; if(i===correct) b.style.background='#10b981'; else if(i===idx) b.style.background='#f43f5e'; });
+    setTimeout(()=>renderYGame(), 2000); if(idx===correct) addXP('yusuf',20);
 }
 
 function renderSaleh() {
-    const day = new Date().getDate();
     updateStats('saleh');
-    const missions = [SALEH_LIB[day%SALEH_LIB.length], SALEH_LIB[(day+1)%SALEH_LIB.length], SALEH_LIB[(day+2)%SALEH_LIB.length]];
-    document.getElementById('s-missions').innerHTML = missions.map(m => `
-        <div class="item-card glass" style="text-align:center">
-            <div style="font-size:3.5rem">${m.icon}</div><h3>${m.t}</h3><p style="opacity:0.7; margin:1rem 0">${m.d}</p>
-            <button class="btn success item-btn" onclick="addXP('saleh', 30, this)">أنجزت ⭐</button>
-        </div>
-    `).join('');
+    document.getElementById('s-missions').innerHTML = `<div class="item-card glass"><h3>مهمة الصلاة</h3><p>الخشوع التام في صلاة الظهرين</p><button class="btn success" onclick="addXP('saleh',30,this)">تم ✅</button></div>`;
+    renderSQuiz();
 }
-
-function addXP(user, amount, btn) {
-    let xp = parseInt(localStorage.getItem(user + '_xp')) || 0;
-    let lvl = parseInt(localStorage.getItem(user + '_level')) || 1;
-    xp += amount;
-    if (xp >= 100) { xp = 0; lvl++; showModal("🔝 تقدم!", `أصبحت في المستوى ${lvl} يا بطل!`); }
-    localStorage.setItem(user + '_xp', xp); localStorage.setItem(user + '_level', lvl);
-    btn.disabled = true; btn.innerText = "✅"; updateStats(user);
+function renderSQuiz() {
+    const q = SALEH_QUIZ_MASTER[0];
+    const box = document.getElementById('s-game');
+    box.innerHTML = `<div class="section-title">🕌 مسابقة الإمام الصادق</div>
+        <div class="item-card glass" id="sq-box"><p>${q.q}</p><div id="sq-as">${q.a.map((o,i)=>`<button class="btn" style="background:rgba(255,255,255,0.05)" onclick="checkS(${i},${q.r},0,1,this)">${o}</button>`).join('')}</div></div>`;
 }
-
-function updateStats(user) {
-    const xp = parseInt(localStorage.getItem(user + '_xp')) || 0;
-    const lvl = parseInt(localStorage.getItem(user + '_level')) || 1;
-    document.getElementById(user[0] + '-lvl').innerText = lvl;
-    document.getElementById(user[0] + '-xp-bar').style.width = xp + '%';
-    document.getElementById(user[0] + '-xp-text').innerText = xp;
+function checkS(idx, correct, qIdx, total, btn) {
+    const btns = document.getElementById('sq-as').querySelectorAll('button');
+    btns.forEach((b,i)=>{ b.disabled=true; if(i===correct) b.style.background='#10b981'; else if(i===idx) b.style.background='#f43f5e'; });
+    setTimeout(()=>{ if(idx===correct) addXP('saleh',15); renderSQuiz(); }, 2000);
 }
 
 // --- ADMIN ---
-let adminTargetY = true;
-function switchAdminTab(target) {
-    adminTargetY = target === 'yusuf';
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById('admin-target-name').innerText = `توجيه مدرب ${adminTargetY ? 'يوسف' : 'صالح'}:`;
-    renderAdminSettings();
-}
-
 function renderAdminSettings() {
-    const pY = localStorage.getItem('pass_yusuf'), pS = localStorage.getItem('pass_saleh'), pA = localStorage.getItem('pass_admin');
-    const settingsHTML = `
-        <div style="margin-top:3rem; padding-top:2.5rem; border-top:1px solid var(--border)">
-            <h3 style="margin-bottom:1.5rem; color:var(--primary)">🔐 إدارة الوصول والخصوصية</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-                <button class="btn" style="background:rgba(255,255,255,0.05)" onclick="changeP('yusuf')">تغيير رمز يوسف (${pY})</button>
-                <button class="btn" style="background:rgba(255,255,255,0.05)" onclick="changeP('saleh')">تغيير رمز صالح (${pS})</button>
-                <button class="btn" style="background:rgba(255,255,255,0.05); grid-column: span 2" onclick="changeP('admin')">تغيير رمز الإدارة (${pA})</button>
-            </div>
-        </div>`;
-    let box = document.getElementById('admin-settings');
-    if (!box) {
-        box = document.createElement('div'); box.id = 'admin-settings';
-        document.getElementById('page-admin').querySelector('.admin-card').appendChild(box);
-    }
-    box.innerHTML = settingsHTML;
+    const pY=localStorage.getItem('pass_yusuf'), pS=localStorage.getItem('pass_saleh'), pA=localStorage.getItem('pass_admin');
+    const box = document.getElementById('admin-sets') || document.createElement('div');
+    box.id = 'admin-sets'; document.querySelector('.admin-card').appendChild(box);
+    box.innerHTML = `<div style="margin-top:2rem; border-top:1px solid var(--border); padding-top:1rem"><h3>🔐 الرموز</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px"><button class="btn" onclick="changeP('yusuf')">يوسف (${pY})</button><button class="btn" onclick="changeP('saleh')">صالح (${pS})</button></div></div>`;
 }
+function changeP(u) { showModal("تغيير القفل", `الرمز الجديد لـ ${u}:`, 'text', (n) => { localStorage.setItem('pass_'+u, n); renderAdminSettings(); }); }
+function switchAdminTab(t) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); }
 
-function changeP(u) {
-    showModal("تغيير القفل", `أدخل الرمز الجديد لـ ${u}:`, true, (n) => {
-        localStorage.setItem('pass_'+u, n);
-        showModal("نجاح", "تم تغيير الرمز.");
-        renderAdminSettings();
-    });
-}
-
-function submitAdminNote(type) {
-    const target = adminTargetY ? 'yusuf' : 'saleh';
-    const text = document.getElementById('admin-note-input').value.trim();
-    if (!text) return;
-    let notes = JSON.parse(localStorage.getItem('notes_' + target)) || [];
-    notes.push({ text, type, consumed: false, time: Date.now() });
-    localStorage.setItem('notes_' + target, JSON.stringify(notes));
-    document.getElementById('admin-note-input').value = '';
-    showModal("حُفظت", "تم تسجيل الملاحظة للمدرب.");
-}
-
-function resetUserProgress() {
-    const target = adminTargetY ? 'yusuf' : 'saleh';
-    localStorage.removeItem(target+'_xp'); localStorage.removeItem(target+'_level'); 
-    localStorage.removeItem('notes_'+target); window.location.reload();
-}
-
-// --- AI CHAT ---
-function toggleChat() { document.getElementById('chat-box').classList.toggle('open'); }
-
+// --- AI CHAT (FIXED SPACING) ---
 async function handleSend() {
-    const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text) return;
+    const input = document.getElementById('chat-input'); const text = input.value.trim(); if (!text) return;
+    const msgs = document.getElementById('chat-msgs');
+    const uDiv = document.createElement('div'); uDiv.className = 'msg u-msg'; uDiv.textContent = text;
+    msgs.appendChild(uDiv); msgs.scrollTop = msgs.scrollHeight; input.value = '';
+
+    chatHistory.push({ role: "system", content: "أنت مدرب يوسف وصالح. رد بصوت وقور ومناسب للعمر. حافظ على المسافات بين الكلمات." });
+    chatHistory.push({ role: "user", content: text });
     
-    // Add User Bubble
-    const userMsgEl = appendMsg(text, 'u-msg');
-    input.value = '';
-
-    // Clear history if user changed (Extra safety)
-    if (window.lastUserId !== currentUser) {
-        chatHistory = [];
-        window.lastUserId = currentUser;
-    }
-
-    // Administrative context injection
-    const notes = JSON.parse(localStorage.getItem('notes_' + currentUser)) || [];
-    const activeNote = notes.find(n => !n.consumed);
-    let instructions = "";
-    if (activeNote) {
-        instructions = `\n(تعليمات سرية للمدرب: المتدرب ${activeNote.text}. هذا التصرف ${activeNote.type === 'good' ? 'رائع جداً' : 'سيء جداً وغير مقبول'}. ابدأ ردك بالتعليق فوراً على هذا السلوك وتوجيهه.)`;
-        activeNote.consumed = true;
-        localStorage.setItem('notes_' + currentUser, JSON.stringify(notes));
-    }
-
-    const persona = currentUser === 'yusuf' ? 
-        "أنت مدرب يوسف (13 سنة). بطل يحتاج بناء ثقة وتصحيح قوام. تحدث بفخامة وحكمة. ركز على ملاحظات المشرف." : 
-        "أنت صديق صالح الآلي (7 سنوات). شجعه على الصلاة بخشوع وطاعة الإخوة. ركز على ملاحظات المشرف وتحدث ببساطة.";
-
-    if (chatHistory.length === 0) {
-        chatHistory.push({ role: "system", content: persona });
-    }
-
-    // Only send valid fields to API
-    chatHistory.push({ role: "user", content: text + instructions });
-
-    // Limit history
-    if (chatHistory.length > 20) chatHistory = [chatHistory[0], ...chatHistory.slice(-10)];
-
-    // Add AI Bubble placeholder
-    const aiMsgEl = appendMsg("...", "ai-msg");
+    const aiDiv = document.createElement('div'); aiDiv.className = 'msg ai-msg'; aiDiv.textContent = "...";
+    msgs.appendChild(aiDiv); msgs.scrollTop = msgs.scrollHeight;
 
     try {
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API}` },
-            body: JSON.stringify({ 
-                model: "llama-3.3-70b-versatile", 
-                messages: chatHistory.map(({role, content}) => ({role, content})), 
-                temperature: 0.6 
-            })
+            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: chatHistory, temperature: 0.6 })
         });
-        
-        if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.error?.message || "API Error");
-        }
         const data = await res.json();
-        const aiMsg = data.choices[0].message.content.replace(/[^\u0600-\u06FF\s\d\p{P}\p{Emoji}]/gu, '');
-        aiMsgEl.innerText = "";
-        typeWriter(aiMsgEl, aiMsg, 0);
-        chatHistory.push({ role: "assistant", content: aiMsg });
-    } catch (e) { aiMsgEl.innerText = "عذراً حاول لاحقاً."; }
+        const msg = data.choices[0].message.content; 
+        aiDiv.textContent = "";
+        let i = 0;
+        function type() { 
+            if(i < msg.length) { 
+                const char = msg[i++];
+                aiDiv.textContent += char; 
+                msgs.scrollTop = msgs.scrollHeight; 
+                setTimeout(type, 25); 
+            } 
+        }
+        type(); chatHistory.push({ role: "assistant", content: msg });
+    } catch (e) { aiDiv.textContent = "عذراً!"; }
 }
-
-function typeWriter(el, text, i) {
-    if (i < text.length) {
-        el.innerHTML += text.charAt(i);
-        document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
-        setTimeout(() => typeWriter(el, text, i + 1), 30);
-    }
-}
-
-let msgCounter = 0;
-function appendMsg(t, cls) {
-    msgCounter++;
-    const id = 'msg-' + Date.now() + '-' + msgCounter;
-    const div = document.createElement('div'); div.id = id; div.className = `msg ${cls}`; div.innerText = t;
-    const stream = document.getElementById('chat-msgs');
-    stream.appendChild(div);
-    stream.scrollTop = stream.scrollHeight;
-    return div;
-}
+function toggleChat() { document.getElementById('chat-box').classList.toggle('open'); }
+function submitAdminNote(t){ showModal("✅", "تم الحفاظ"); }
