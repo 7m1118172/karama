@@ -105,7 +105,11 @@ function showLoginGate(user) {
     showModal(`دخول ${label}`, "أدخل الرمز السري للمتابعة:", true, (pass) => {
         if (pass === localStorage.getItem('pass_' + user)) {
             authStates[user] = true;
-            window.location.hash = user === 'admin' ? '#/abo.ali12' : '#' + user;
+            if (window.location.hash === (user === 'admin' ? '#/abo.ali12' : '#' + user)) {
+                router(); // Manual trigger if hash didn't change
+            } else {
+                window.location.hash = user === 'admin' ? '#/abo.ali12' : '#' + user;
+            }
         } else {
             showModal("خطأ", "الرمز غير صحيح!");
             window.location.hash = '#/';
