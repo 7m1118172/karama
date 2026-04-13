@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكاديمية الكرامة</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Persistent Background -->
+        <div class="bg-container">
+            <div class="glow-orb"></div>
+            <div class="glow-orb orb-2"></div>
+        </div>
+
+        <!-- App Header (Hidden on Gateway) -->
+        <header id="app-header" class="app-header" style="display:none">
+            <a href="#/" class="logo">الكرامة<span>.</span></a>
+            <div class="header-actions" style="display:flex; align-items:center; gap:15px">
+                <span id="header-user-name" style="font-weight:bold; color:var(--primary)"></span>
+                <button class="btn danger" onclick="logout()" style="padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius:12px">خروج</button>
+            </div>
+        </header>
+
+        <!-- Dynamic Page Container -->
+        <main id="main-content">
+            
+            <!-- GATEWAY PAGE (Home) -->
+            <section id="page-home" class="page active">
+                <div class="gateway-content">
+                    <h1 class="main-title">الكرامة<span>.</span></h1>
+                    <p class="desc" style="font-size:1.5rem; letter-spacing:1px">أكاديمية بناء الشخصية وصناعة الرجال</p>
+                    
+                    <div class="picker-grid">
+                        <div class="u-btn glass" onclick="showLoginGate('yusuf')">
+                            <i>👨🏻‍🎓</i>
+                            <h2>يوسف</h2>
+                            <p style="opacity:0.6; margin-top:5px">أكاديمية الشباب (13 سنة)</p>
+                        </div>
+                        <div class="u-btn glass" onclick="showLoginGate('saleh')">
+                            <i>👦🏻</i>
+                            <h2>صالح</h2>
+                            <p style="opacity:0.6; margin-top:5px">أكاديمية الأشبال (7 سنوات)</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- YUSUF DASHBOARD -->
+            <section id="page-yusuf" class="page">
+                <div class="stats-banner glass">
+                    <div class="lvl-circle" id="y-lvl">1</div>
+                    <div class="prog-bar">
+                        <h2 style="margin-bottom:5px">مرحباً يوسف البطل!</h2>
+                        <div class="inner-bar"><div id="y-xp-bar" class="bar-fill"></div></div>
+                        <p style="font-size:0.9rem; margin-top:8px; opacity:0.8">النقاط الحالية: <span id="y-xp-text" style="font-weight:bold; color:var(--primary)">0</span> / 100 XP</p>
+                    </div>
+                </div>
+
+                <div class="section-title">⭐ مهمات بناء الشخصية والكاريزما</div>
+                <div id="y-missions" class="card-grid"></div>
+
+                <div class="section-title">🦾 تمارين القوام وهيبة الرجال</div>
+                <div id="y-exercises" class="card-grid"></div>
+            </section>
+
+            <!-- SALEH DASHBOARD -->
+            <section id="page-saleh" class="page">
+                <div class="stats-banner glass">
+                    <div class="lvl-circle" id="s-lvl" style="background:var(--saleh)">1</div>
+                    <div class="prog-bar">
+                        <h2 style="margin-bottom:5px">بطلنا الصغير صالح الشطور!</h2>
+                        <div class="inner-bar"><div id="s-xp-bar" class="bar-fill" style="background:var(--saleh)"></div></div>
+                        <p style="font-size:0.9rem; margin-top:8px; opacity:0.8">النجوم التي جمعتها: <span id="s-xp-text" style="font-weight:bold; color:var(--saleh)">0</span> / 100 ⭐</p>
+                    </div>
+                </div>
+
+                <div class="section-title" style="border-right-color:var(--saleh)">🕌 طريق النجاح (الصلاة والأدب)</div>
+                <div id="s-missions" class="card-grid"></div>
+            </section>
+
+            <!-- ADMIN PANEL -->
+            <section id="page-admin" class="page">
+                <div class="admin-card glass">
+                    <h2 style="margin-bottom:2rem; text-align:center">لوحة الإدارة والإشراف السري</h2>
+                    
+                    <div class="admin-tabs" style="justify-content:center">
+                        <button class="tab-btn active" onclick="switchAdminTab('yusuf')">إدارة يوسف</button>
+                        <button class="tab-btn" onclick="switchAdminTab('saleh')">إدارة صالح</button>
+                    </div>
+
+                    <div id="admin-editor" style="margin-top:2rem">
+                        <p id="admin-target-name" style="font-weight:bold; margin-bottom:10px">توجيه مدرب يوسف:</p>
+                        <textarea id="admin-note-input" placeholder="اكتب ملاحظاتك عن السلوك اليوم للمدرب..."></textarea>
+                        <div style="display:flex; gap:15px; margin-top:1.5rem">
+                            <button onclick="submitAdminNote('bad')" class="btn danger" style="flex:1">تسجيل خطأ / سلوك سيء</button>
+                            <button onclick="submitAdminNote('good')" class="btn success" style="flex:1">تسجيل إنجاز / طاعة</button>
+                        </div>
+                        <button onclick="resetUserProgress()" class="btn" style="width:100%; margin-top:2.5rem; background:#334155; height:60px">⚠️ تصفير كافة البيانات (Reset)</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Custom Modal System -->
+        <div id="modal-overlay" class="modal-overlay">
+            <div class="modal glass">
+                <h3 id="modal-title" style="color:var(--primary); font-size:1.8rem; margin-bottom:1rem">تنبيه</h3>
+                <div id="modal-body" style="font-size:1.2rem; line-height:1.6"></div>
+                <div id="modal-input-container" style="display:none">
+                    <input type="password" id="modal-input" placeholder="••••">
+                </div>
+                <div style="display:flex; gap:15px; margin-top:2rem">
+                    <button id="modal-btn-ok" class="btn" style="flex:1; height:50px">موافق</button>
+                    <button id="modal-btn-cancel" class="btn" style="flex:1; background:rgba(255,255,255,0.1); height:50px">إلغاء</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Widget (Floating) -->
+        <div id="chat-widget" class="chat-container" style="display:none">
+            <button class="chat-bubble-btn" onclick="toggleChat()">🦾</button>
+            <div id="chat-box" class="chat-box glass">
+                <div class="app-header" style="border-radius:30px 30px 0 0">
+                    <h4 id="coach-name" style="color:var(--primary)">المدرب الذكي</h4>
+                    <button onclick="toggleChat()" style="background:none; border:none; color:white; cursor:pointer; font-size:1.5rem">×</button>
+                </div>
+                <div id="chat-msgs" class="chat-msgs"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="تحدث مع مدربك الشخصي...">
+                    <button onclick="handleSend()" class="btn" style="height:45px; width:45px; border-radius:50%; padding:0">➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
