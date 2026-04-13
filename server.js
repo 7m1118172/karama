@@ -8,14 +8,18 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve all static files from root
+// Serve static files from the root directory
 app.use(express.static(__dirname));
 
-// Redirect all routes to index.html (SPA support)
-app.get('*', (req, res) => {
-    res.sendFile(join(__dirname, 'index.html'));
+// Corrected wildcard route for modern Express/Render compatibility
+app.get('/*', (req, res) => {
+    res.sendFile(join(__dirname, 'index.html'), (err) => {
+        if (err) {
+            res.status(500).send("Error loading academy portal.");
+        }
+    });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Karama Academy is running as a Web Service on port ${PORT}`);
+    console.log(`Karama Academy Server Active on Port ${PORT}`);
 });
