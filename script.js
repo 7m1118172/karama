@@ -238,8 +238,9 @@ async function handleSend() {
     input.value = '';
 
     // Clear history if user changed (Extra safety)
-    if (chatHistory.length > 0 && chatHistory[0].userId !== currentUser) {
+    if (window.lastUserId !== currentUser) {
         chatHistory = [];
+        window.lastUserId = currentUser;
     }
 
     // Administrative context injection
@@ -257,14 +258,14 @@ async function handleSend() {
         "أنت صديق صالح الآلي (7 سنوات). شجعه على الصلاة بخشوع وطاعة الإخوة. ركز على ملاحظات المشرف وتحدث ببساطة.";
 
     if (chatHistory.length === 0) {
-        chatHistory.push({ role: "system", content: persona, userId: currentUser });
+        chatHistory.push({ role: "system", content: persona });
     }
 
-    // Inject note into the USER's message content so the AI sees it as part of the current context
+    // Only send valid fields to API
     chatHistory.push({ role: "user", content: text + instructions });
 
     // Limit history
-    if (chatHistory.length > 15) chatHistory = [chatHistory[0], ...chatHistory.slice(-10)];
+    if (chatHistory.length > 20) chatHistory = [chatHistory[0], ...chatHistory.slice(-10)];
 
     // Add AI Bubble placeholder
     const aiMsgEl = appendMsg("...", "ai-msg");
@@ -273,8 +274,17 @@ async function handleSend() {
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API}` },
-            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: chatHistory, temperature: 0.6 })
+            body: JSON.stringify({ 
+                model: "llama-3.3-70b-versatile", 
+                messages: chatHistory.map(({role, content}) => ({role, content})), 
+                temperature: 0.6 
+            })
         });
+        
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error?.message || "API Error");
+        }
         const data = await res.json();
         const aiMsg = data.choices[0].message.content.replace(/[^\u0600-\u06FF\s\d\p{P}\p{Emoji}]/gu, '');
         aiMsgEl.innerText = "";
