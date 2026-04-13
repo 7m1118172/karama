@@ -237,21 +237,34 @@ async function handleSend() {
     const userMsgEl = appendMsg(text, 'u-msg');
     input.value = '';
 
+    // Clear history if user changed (Extra safety)
+    if (chatHistory.length > 0 && chatHistory[0].userId !== currentUser) {
+        chatHistory = [];
+    }
+
+    // Administrative context injection
     const notes = JSON.parse(localStorage.getItem('notes_' + currentUser)) || [];
     const activeNote = notes.find(n => !n.consumed);
-    let noteInjected = "";
+    let instructions = "";
     if (activeNote) {
-        noteInjected = `\n[تنبيه من المشرف: المتدرب ${activeNote.text}. هذا تصرف ${activeNote.type === 'good' ? 'ممتاز' : 'سيء'}.]`;
+        instructions = `\n(تعليمات سرية للمدرب: المتدرب ${activeNote.text}. هذا التصرف ${activeNote.type === 'good' ? 'رائع جداً' : 'سيء جداً وغير مقبول'}. ابدأ ردك بالتعليق فوراً على هذا السلوك وتوجيهه.)`;
         activeNote.consumed = true;
         localStorage.setItem('notes_' + currentUser, JSON.stringify(notes));
     }
 
     const persona = currentUser === 'yusuf' ? 
-        "أنت مدرب يوسف (13 سنة). بطل يحتاج بناء ثقة وتصحيح قوام. رد بود وفخامة." : 
-        "أنت صديق صالح الآلي (7 سنوات). شجعه على الصلاة بخشوع وطاعة الإخوة.";
+        "أنت مدرب يوسف (13 سنة). بطل يحتاج بناء ثقة وتصحيح قوام. تحدث بفخامة وحكمة. ركز على ملاحظات المشرف." : 
+        "أنت صديق صالح الآلي (7 سنوات). شجعه على الصلاة بخشوع وطاعة الإخوة. ركز على ملاحظات المشرف وتحدث ببساطة.";
 
-    chatHistory.push({ role: "system", content: persona + noteInjected });
-    chatHistory.push({ role: "user", content: text });
+    if (chatHistory.length === 0) {
+        chatHistory.push({ role: "system", content: persona, userId: currentUser });
+    }
+
+    // Inject note into the USER's message content so the AI sees it as part of the current context
+    chatHistory.push({ role: "user", content: text + instructions });
+
+    // Limit history
+    if (chatHistory.length > 15) chatHistory = [chatHistory[0], ...chatHistory.slice(-10)];
 
     // Add AI Bubble placeholder
     const aiMsgEl = appendMsg("...", "ai-msg");
